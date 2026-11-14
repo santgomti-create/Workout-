@@ -1,0 +1,6 @@
+{
+  "name": "FitTrack",
+  "description": "Modern workout tracker with daily dashboard, workout timer, fitness goals, workout history charts, exercise library, and privacy-friendly data controls.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,233 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global safety net: deny everything by default
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidWorkoutCategory(category) {
+      return category in ['Walking', 'Running', 'Cycling', 'Yoga', 'Gym', 'Home Workout', 'Custom'];
+    }
+
+    function isValidLibraryCategory(category) {
+      return category in ['Walking', 'Running', 'Cycling', 'Yoga', 'Gym', 'Home Workout'];
+    }
+
+    function isValidIntensity(intensity) {
+      return intensity in ['Beginner', 'Moderate', 'Vigorous'];
+    }
+
+    function isValidDateKey(dateKey) {
+      return dateKey is string && dateKey.size() == 10 && dateKey.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$');
+    }
+
+    function isValidUserProfile(data) {
+      return data.userId is string &&
+             data.userId == request.auth.uid &&
+             data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 60 &&
+             data.age is int && data.age >= 13 && data.age <= 120 &&
+             data.fitnessGoal in ['General Wellness', 'Weight Loss', 'Endurance', 'Strength & Tone', 'Flexibility'] &&
+             isValidIntensity(data.preferredIntensity) &&
+             data.preferredCategories is list && data.preferredCategories.size() <= 10 &&
+             (data.preferredCategories.size() == 0 || data.preferredCategories[0] is string) &&
+             data.dailyMinutesGoal is int && data.dailyMinutesGoal >= 5 && data.dailyMinutesGoal <= 600 &&
+             data.dailyCaloriesGoal is int && data.dailyCaloriesGoal >= 50 && data.dailyCaloriesGoal <= 5000 &&
+             data.weeklyWorkoutsGoal is int && data.weeklyWorkoutsGoal >= 1 && data.weeklyWorkoutsGoal <= 14 &&
+             data.themePreference in ['system', 'dark', 'light'] &&
+             data.privacyAnalyticsOptOut is bool &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidWorkoutRecord(data) {
+      return data.userId is string &&
+             data.userId == request.auth.uid &&
+             data.title is string && data.title.size() >= 1 && data.title.size() <= 80 &&
+             isValidWorkoutCategory(data.category) &&
+             data.durationSeconds is int && data.durationSeconds >= 1 && data.durationSeconds <= 86400 &&
+             data.caloriesBurned is int && data.caloriesBurned >= 0 && data.caloriesBurned <= 10000 &&
+             isValidIntensity(data.intensity) &&
+             isValidDateKey(data.dateKey) &&
+             (!('notes' in data) || data.notes == null || (data.notes is string && data.notes.size() <= 300)) &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidDailyGoal(data) {
+      return data.userId is string &&
+             data.userId == request.auth.uid &&
+             data.title is string && data.title.size() >= 1 && data.title.size() <= 80 &&
+             data.targetValue is int && data.targetValue >= 1 && data.targetValue <= 10000 &&
+             data.currentValue is int && data.currentValue >= 0 && data.currentValue <= 10000 &&
+             data.unit is string && data.unit.size() >= 1 && data.unit.size() <= 20 &&
+             isValidDateKey(data.dateKey) &&
+             data.completed is bool &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidCustomExercise(data) {
+      return data.userId is string &&
+             data.userId == request.auth.uid &&
+             data.name is string && data.name.size() >= 1 && data.name.size() <= 80 &&
+             isValidLibraryCategory(data.category) &&
+             data.instructions is string && data.instructions.size() >= 1 && data.instructions.size() <= 500 &&
+             data.difficulty in ['Beginner', 'Intermediate', 'Advanced'] &&
+             data.caloriesPerMinute is int && data.caloriesPerMinute >= 1 && data.caloriesPerMinute <= 30 &&
+             data.defaultRestSeconds is int && data.defaultRestSeconds >= 5 && data.defaultRestSeconds <= 300 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    match /users/{userId} {
+      allow get: if isOwner(userId) && isValidId(userId);
+      allow list: if false;
+
+      allow create: if isOwner(userId) &&
+                       isValidId(userId) &&
+                       incoming().keys().hasAll([
+                         'userId', 'displayName', 'age', 'fitnessGoal',
+                         'preferredIntensity', 'preferredCategories',
+                         'dailyMinutesGoal', 'dailyCaloriesGoal', 'weeklyWorkoutsGoal',
+                         'themePreference', 'privacyAnalyticsOptOut', 'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'displayName', 'age', 'fitnessGoal',
+                         'preferredIntensity', 'preferredCategories',
+                         'dailyMinutesGoal', 'dailyCaloriesGoal', 'weeklyWorkoutsGoal',
+                         'themePreference', 'privacyAnalyticsOptOut', 'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidUserProfile(incoming());
+
+      allow update: if isOwner(userId) &&
+                       isValidId(userId) &&
+                       isValidUserProfile(incoming()) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'displayName', 'age', 'fitnessGoal',
+                         'preferredIntensity', 'preferredCategories',
+                         'dailyMinutesGoal', 'dailyCaloriesGoal', 'weeklyWorkoutsGoal',
+                         'themePreference', 'privacyAnalyticsOptOut', 'updatedAt'
+                       ]);
+
+      allow delete: if isOwner(userId) && isValidId(userId);
+
+      match /workouts/{workoutId} {
+        allow get: if isOwner(userId) && isValidId(userId) && isValidId(workoutId);
+        allow list: if isOwner(userId) && isValidId(userId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(userId) &&
+                         isValidId(workoutId) &&
+                         incoming().keys().hasAll([
+                           'userId', 'title', 'category', 'durationSeconds',
+                           'caloriesBurned', 'intensity', 'dateKey', 'createdAt', 'updatedAt'
+                         ]) &&
+                         incoming().keys().hasOnly([
+                           'userId', 'title', 'category', 'durationSeconds',
+                           'caloriesBurned', 'intensity', 'dateKey', 'notes', 'createdAt', 'updatedAt'
+                         ]) &&
+                         isValidWorkoutRecord(incoming());
+
+        allow update: if isOwner(userId) &&
+                         isValidId(userId) &&
+                         isValidId(workoutId) &&
+                         isValidWorkoutRecord(incoming()) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'title', 'category', 'durationSeconds',
+                           'caloriesBurned', 'intensity', 'dateKey', 'notes', 'updatedAt'
+                         ]);
+
+        allow delete: if isOwner(userId) && isValidId(userId) && isValidId(workoutId);
+      }
+
+      match /daily_goals/{goalId} {
+        allow get: if isOwner(userId) && isValidId(userId) && isValidId(goalId);
+        allow list: if isOwner(userId) && isValidId(userId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(userId) &&
+                         isValidId(goalId) &&
+                         incoming().keys().hasAll([
+                           'userId', 'title', 'targetValue', 'currentValue',
+                           'unit', 'dateKey', 'completed', 'createdAt', 'updatedAt'
+                         ]) &&
+                         incoming().keys().hasOnly([
+                           'userId', 'title', 'targetValue', 'currentValue',
+                           'unit', 'dateKey', 'completed', 'createdAt', 'updatedAt'
+                         ]) &&
+                         isValidDailyGoal(incoming());
+
+        allow update: if isOwner(userId) &&
+                         isValidId(userId) &&
+                         isValidId(goalId) &&
+                         isValidDailyGoal(incoming()) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'title', 'targetValue', 'currentValue',
+                           'unit', 'dateKey', 'completed', 'updatedAt'
+                         ]);
+
+        allow delete: if isOwner(userId) && isValidId(userId) && isValidId(goalId);
+      }
+
+      match /custom_exercises/{exerciseId} {
+        allow get: if isOwner(userId) && isValidId(userId) && isValidId(exerciseId);
+        allow list: if isOwner(userId) && isValidId(userId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(userId) &&
+                         isValidId(exerciseId) &&
+                         incoming().keys().hasAll([
+                           'userId', 'name', 'category', 'instructions',
+                           'difficulty', 'caloriesPerMinute', 'defaultRestSeconds',
+                           'createdAt', 'updatedAt'
+                         ]) &&
+                         incoming().keys().hasOnly([
+                           'userId', 'name', 'category', 'instructions',
+                           'difficulty', 'caloriesPerMinute', 'defaultRestSeconds',
+                           'createdAt', 'updatedAt'
+                         ]) &&
+                         isValidCustomExercise(incoming());
+
+        allow update: if isOwner(userId) &&
+                         isValidId(userId) &&
+                         isValidId(exerciseId) &&
+                         isValidCustomExercise(incoming()) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'name', 'category', 'instructions',
+                           'difficulty', 'caloriesPerMinute', 'defaultRestSeconds', 'updatedAt'
+                         ]);
+
+        allow delete: if isOwner(userId) && isValidId(userId) && isValidId(exerciseId);
+      }
+    }
+  }
+}

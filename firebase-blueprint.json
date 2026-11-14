@@ -1,0 +1,277 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile, fitness targets, workout preferences, and privacy settings.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Authenticated Firebase UID of the user."
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Display name shown on dashboard and profile."
+        },
+        "age": {
+          "type": "integer",
+          "description": "User age in years (13-120)."
+        },
+        "fitnessGoal": {
+          "type": "string",
+          "enum": ["General Wellness", "Weight Loss", "Endurance", "Strength & Tone", "Flexibility"],
+          "description": "Primary fitness objective."
+        },
+        "preferredIntensity": {
+          "type": "string",
+          "enum": ["Beginner", "Moderate", "Vigorous"],
+          "description": "Preferred workout intensity level."
+        },
+        "preferredCategories": {
+          "type": "array",
+          "description": "Up to 10 preferred workout categories."
+        },
+        "dailyMinutesGoal": {
+          "type": "integer",
+          "description": "Daily active minutes target."
+        },
+        "dailyCaloriesGoal": {
+          "type": "integer",
+          "description": "Daily estimated calories burned target."
+        },
+        "weeklyWorkoutsGoal": {
+          "type": "integer",
+          "description": "Weekly workouts count target."
+        },
+        "themePreference": {
+          "type": "string",
+          "enum": ["system", "dark", "light"],
+          "description": "User theme mode preference."
+        },
+        "privacyAnalyticsOptOut": {
+          "type": "boolean",
+          "description": "Whether the user opted into strict minimal data mode."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when created (FieldValue.serverTimestamp())."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when last updated (FieldValue.serverTimestamp())."
+        }
+      },
+      "required": [
+        "userId",
+        "displayName",
+        "age",
+        "fitnessGoal",
+        "preferredIntensity",
+        "preferredCategories",
+        "dailyMinutesGoal",
+        "dailyCaloriesGoal",
+        "weeklyWorkoutsGoal",
+        "themePreference",
+        "privacyAnalyticsOptOut",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "WorkoutRecord": {
+      "title": "WorkoutRecord",
+      "description": "A completed or logged workout session.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Authenticated Firebase UID of the owner."
+        },
+        "title": {
+          "type": "string",
+          "description": "Workout or exercise title."
+        },
+        "category": {
+          "type": "string",
+          "enum": ["Walking", "Running", "Cycling", "Yoga", "Gym", "Home Workout", "Custom"],
+          "description": "Workout category."
+        },
+        "durationSeconds": {
+          "type": "integer",
+          "description": "Workout duration in seconds."
+        },
+        "caloriesBurned": {
+          "type": "integer",
+          "description": "Estimated calories burned."
+        },
+        "intensity": {
+          "type": "string",
+          "enum": ["Beginner", "Moderate", "Vigorous"],
+          "description": "Workout effort level."
+        },
+        "dateKey": {
+          "type": "string",
+          "description": "Local calendar date in yyyy-MM-dd format."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Optional workout notes."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when created (FieldValue.serverTimestamp())."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when last updated (FieldValue.serverTimestamp())."
+        }
+      },
+      "required": [
+        "userId",
+        "title",
+        "category",
+        "durationSeconds",
+        "caloriesBurned",
+        "intensity",
+        "dateKey",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "DailyGoal": {
+      "title": "DailyGoal",
+      "description": "A user-defined daily fitness goal item.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Authenticated Firebase UID of the owner."
+        },
+        "title": {
+          "type": "string",
+          "description": "Goal title."
+        },
+        "targetValue": {
+          "type": "integer",
+          "description": "Numeric target for the goal."
+        },
+        "currentValue": {
+          "type": "integer",
+          "description": "Current progress toward the target."
+        },
+        "unit": {
+          "type": "string",
+          "description": "Measurement unit (min, kcal, steps, reps, etc.)."
+        },
+        "dateKey": {
+          "type": "string",
+          "description": "Calendar date in yyyy-MM-dd format."
+        },
+        "completed": {
+          "type": "boolean",
+          "description": "Whether the goal is completed."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when created (FieldValue.serverTimestamp())."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when last updated (FieldValue.serverTimestamp())."
+        }
+      },
+      "required": [
+        "userId",
+        "title",
+        "targetValue",
+        "currentValue",
+        "unit",
+        "dateKey",
+        "completed",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "CustomExercise": {
+      "title": "CustomExercise",
+      "description": "A custom exercise added by the user to their personal library.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Authenticated Firebase UID of the owner."
+        },
+        "name": {
+          "type": "string",
+          "description": "Exercise name."
+        },
+        "category": {
+          "type": "string",
+          "enum": ["Walking", "Running", "Cycling", "Yoga", "Gym", "Home Workout"],
+          "description": "Exercise category."
+        },
+        "instructions": {
+          "type": "string",
+          "description": "Beginner-friendly step-by-step instructions."
+        },
+        "difficulty": {
+          "type": "string",
+          "enum": ["Beginner", "Intermediate", "Advanced"],
+          "description": "Exercise difficulty level."
+        },
+        "caloriesPerMinute": {
+          "type": "integer",
+          "description": "Estimated kcal burned per minute."
+        },
+        "defaultRestSeconds": {
+          "type": "integer",
+          "description": "Recommended rest timer duration in seconds."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when created (FieldValue.serverTimestamp())."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when last updated (FieldValue.serverTimestamp())."
+        }
+      },
+      "required": [
+        "userId",
+        "name",
+        "category",
+        "instructions",
+        "difficulty",
+        "caloriesPerMinute",
+        "defaultRestSeconds",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Private user profile, targets, and workout preferences."
+    },
+    "/users/{userId}/workouts/{workoutId}": {
+      "schema": { "$ref": "#/entities/WorkoutRecord" },
+      "description": "User's private workout history records."
+    },
+    "/users/{userId}/daily_goals/{goalId}": {
+      "schema": { "$ref": "#/entities/DailyGoal" },
+      "description": "User's private daily fitness goals."
+    },
+    "/users/{userId}/custom_exercises/{exerciseId}": {
+      "schema": { "$ref": "#/entities/CustomExercise" },
+      "description": "User's custom exercises in the Exercise Library."
+    }
+  }
+}

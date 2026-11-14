@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">FitTrack</string>
+    <string name="tagline_auth">Move consistently. Track privately. Grow stronger every day.</string>
+    <string name="sign_in_google">Sign in with Google</string>
+    <string name="privacy_promise_short">Your workouts and goals are stored privately under your account with zero third-party ad tracking.</string>
+    <string name="nav_dashboard">Home</string>
+    <string name="nav_track">Track</string>
+    <string name="nav_library">Library</string>
+    <string name="nav_history">History</string>
+    <string name="nav_profile">Profile</string>
+</resources>
